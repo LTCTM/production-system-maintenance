@@ -1,0 +1,127 @@
+%常量
+tbf=30;
+cmc=10;
+cmp=20;
+cup=3;
+cus=0.5;
+H=100;
+Uc=10;
+Up=5;
+T=50;
+Umax=2;
+f=20;
+q=20;
+%变量
+status=1;
+e1=tbf;
+e3=T;
+e2=0;
+e4=0;
+e5=Umax;
+e6=f;
+idc=0;
+%结果变量
+CMP=0;
+CMC=0;
+CS=0;
+CPR=0;
+tsim=0;
+ns=0;
+%
+pe=0;
+
+while(tsim<=H)
+    if (status==1)
+       pe=min([e1,e3,e5,e6]);
+       e1=e1-pe;
+       e3=e3-pe;
+       e5=e5-pe;
+       e6=e6-pe;
+       if(e1==0)
+           status=2;
+           CMC=CMC+cmc;
+           e2=Uc;
+       else
+           if(e3==0)
+               status=3;
+               CMP=CMP+cmp;
+               e4=Up;
+           else
+               if(e5==0)
+                   CS=CS+((tsim+pe-idc)*ns)*cus;
+                   idc=tsim+pe;
+                   CPR=CPR+cup;
+                   ns=ns+1;
+                   e5=Umax;
+               else
+                   if(e6==0)
+                       CS=CS+((tsim+pe-idc)*ns)*cus;
+                       idc=tsim+pe;
+                       if(ns>=q)
+                           ns=ns-q;
+                       else
+                           ns=0;
+                       end
+                       e6=f;
+                   else
+                       disp("erreur no1");
+                   end
+               end
+           end
+       end
+    else
+         if(status==2)
+             pe=min([e2,e6]);
+             e2=e2-pe;
+             e6=e6-pe;
+             if(e2==0)
+                 status=1;
+                 e1=tbf;
+                 e3=T;
+             else
+                 if(e6==0)
+                     CS=CS+((tsim+pe-idc)*ns)*cus;
+                     idc=tsim+pe;
+                     if(ns>=q)
+                         ns=ns-q;
+                     else
+                         ns=0;
+                     end
+                     e6=f;
+                 else
+                     disp("erreur no2")
+                 end
+             end
+         else
+             if(status==3)
+                 pe=min([e4,e6]);
+                 e4=e4-pe;
+                 e6=e6-pe;
+                 if(e4==0)
+                     status=1;
+                     e1=tbf;
+                     e3=T;
+                 else
+                     if(e6==0)
+                        CS=CS+((tsim+pe-idc)*ns)*cus;
+                         idc=tsim+pe;
+                         if(ns>=q)
+                             ns=ns-q;
+                         else
+                             ns=0;
+                         end
+                         e6=f; 
+                     else
+                         disp("erreur no3")
+                     end
+                 end
+             else
+                 disp("errur no4\n")
+             end
+         end
+    end
+    tsim=tsim+pe;
+end
+CT=CMC+CMP+CS+CPR;
+CM=CT/tsim;
+disp(CM)
