@@ -1,16 +1,18 @@
-H=600;%设计运行时长
-cmc=50;%单次维修费
-Uc=15;%维修时间
-cmp=35;%单次维护费
+H=100;%设计运行时长
+cmc=10;%单次维修费
+cmp=20;%单次维护费
+cus=0.5;%单位时间单位产品仓储费
+cup=3;%生产一个产品的成本
+cupe=0;%每件交付失败罚金
+
+Uc=10;%维修时间
 Up=5;%维护时间
-T=60;%维护频率
-cus=1;%单位时间单位产品仓储费
-cup=40;%生产一个产品的成本
-cupe=10;%每件交付失败罚金
-Umax=20;%生产一个产品所需时间
-q=1;%交货量
-f=160;%交货频率
-nsmax=3;%满容
+Umax=2;%生产一个产品所需时间
+T=50;%维护频率
+
+q=20;%交货量
+f=20;%交货频率
+nsmax=inf;%满容
 %========
 next_events=[next_fail(),NaN,T,T+Up,Umax,f];
 next_events(2)=next_events(1)+Uc;
@@ -20,10 +22,12 @@ full=0;%是否满容，和status类似
 %需要计算的结果
 CMC=0;%累计维修费
 CMP=0;%累计维护费
-CPR=cup;%累计生产成本。法国人的设计中好像没有算第一个产品的成本
+CPR=0;%累计生产成本。法国人的设计中好像没有算第一个产品的成本
+%CPR=cup;
 CS=0;%累计仓储
 CPE=0;%累计交付失败罚金
-CTM=0;%最终结果
+CM=0;%累计总花费
+CT=0;%最终结果
 ns=0;%仓库储量
 
 while(tsim<=H)
@@ -39,9 +43,8 @@ while(tsim<=H)
     if(status==1 && cur_event==1) %运行中发生故障
         next_events(1)=Uc+next_fail();%生成下一次的故障时间
         status=2;%切换至维修中状态
-        next_events(5)=Uc+next_events(5);%生产不中断，仅延后
+        next_events(5)=Uc+next_events(5);%生产延后
         %故障会重置下次维护时间
-        %这一步法国人认为可选，但是这样不对
         %故障和维护必须能够刷新对方，不一定要求刷新自己，整个系统才能没有bug
         next_events(3)=T+Uc;
         next_events(4)=next_events(3)+Up;
@@ -51,9 +54,9 @@ while(tsim<=H)
         next_events(2)=next_events(1)+Uc;%下一次维修完成时间
         status=1;%切换至生产中状态
     elseif (status==1  && cur_event==3)%运行中开始维护
-        next_events(3)=T;%这里可以假设机器在下次维护之前都不故障
+        next_events(3)=T;%假设机器在下次维护之前都不故障
         status=3;%切换至维护中状态
-        next_events(5)=Up+next_events(5);%生产不中断，仅延后
+        next_events(5)=Up+next_events(5);%生产延后
         %维护后生成下次故障时间
         next_events(1)=Uc+next_fail();
         next_events(2)=next_events(1)+Uc;
@@ -91,8 +94,5 @@ while(tsim<=H)
     end
     tsim=tsim+pe;
 end
-%function result=base_arr()
-    %result=zeros(200,2)*NaN;
-    %result(1,1)=0;
-    %result(1,2)=0;
-%end
+CT=CMC+CMP+CPR+CS+CPE;
+CM=CT/tsim
