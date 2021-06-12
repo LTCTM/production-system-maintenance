@@ -1,3 +1,3 @@
 function result=next_fail()
-    result=30;
+result=weibull(2,110);
 end

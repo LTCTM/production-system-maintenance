@@ -3,12 +3,15 @@ cmc=10;
 cmp=20;
 cup=3;
 cus=0.5;
-H=100;
+H=1000000;
 Uc=10;
 Up=5;
 Umax=2;
 f=20;
 q=20;
+nsmax=25;
+cupe=0.1;
+
 arr_result=zeros(20,2);
 %要用for循环走T，找到最佳T，使花费最小
 for T=5:5:100
@@ -26,6 +29,7 @@ for T=5:5:100
     CMC=0;
     CS=0;
     CPR=0;
+    CPE=0;
     tsim=0;
     ns=0;
     %
@@ -52,8 +56,12 @@ for T=5:5:100
                         CS=CS+((tsim+pe-idc)*ns)*cus;
                         idc=tsim+pe;
                         CPR=CPR+cup;
-                        ns=ns+1;
-                        e5=Umax;
+                        if(ns<nsmax)
+                            ns=ns+1;
+                            e5=Umax;
+                        else
+                            status=4;
+                        end
                     else
                         if(e6==0)
                             CS=CS+((tsim+pe-idc)*ns)*cus;
@@ -62,6 +70,7 @@ for T=5:5:100
                                 ns=ns-q;
                             else
                                 ns=0;
+                                CPE=CPE+(q-ns)*cupe;
                             end
                             e6=f;
                         else
@@ -117,13 +126,27 @@ for T=5:5:100
                         end
                     end
                 else
-                    disp("errur no4\n")
+                    if(status==4)
+                        CS=CS+((tsim+pe-idc)*ns)*cus;
+                        idc=tsim+pe;
+                        if(ns+1>=q)
+                            ns=ns+1-q;
+                        else
+                            ns=0;
+                            CPE=CPE+(q-(ns+1))*cupe;
+                        end
+                        e6=f;
+                        status=1;
+                        e5=Umax;
+                    else
+                        disp("errur no4\n")
+                    end
                 end
             end
         end
         tsim=tsim+pe;
     end
-    CT=CMC+CMP+CS+CPR;
+    CT=CMC+CMP+CS+CPR+CPE;
     CM=CT/tsim;
     arr_result(T/5,1)=T;
     arr_result(T/5,2)=CM;

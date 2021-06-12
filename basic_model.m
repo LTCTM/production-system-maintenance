@@ -1,24 +1,25 @@
-H=100;%设计运行时长
+H=1000000;%设计运行时长
 cmc=10;%单次维修费
 cmp=20;%单次维护费
 cus=0.5;%单位时间单位产品仓储费
 cup=3;%生产一个产品的成本
-cupe=0;%每件交付失败罚金
+cupe=0.1;%每件交付失败罚金
 
 Uc=10;%维修时间
 Up=5;%维护时间
 Umax=2;%生产一个产品所需时间
-T=50;%维护频率
 
 q=20;%交货量
 f=20;%交货频率
-nsmax=inf;%满容
-%========
+nsmax=25;%满容
+
+T=50;%维护频率
+%====启动====
 next_events=[next_fail(),NaN,T,T+Up,Umax,f];
 next_events(2)=next_events(1)+Uc;
 tsim=0;%累计运行时长
 status=1;%启动模拟时机器处于“生产中”状态
-full=0;%是否满容，和status类似
+ns_full=0;%是否满容，和status类似
 %需要计算的结果
 CMC=0;%累计维修费
 CMP=0;%累计维护费
@@ -26,8 +27,6 @@ CPR=0;%累计生产成本。法国人的设计中好像没有算第一个产品的成本
 %CPR=cup;
 CS=0;%累计仓储
 CPE=0;%累计交付失败罚金
-CM=0;%累计总花费
-CT=0;%最终结果
 ns=0;%仓库储量
 
 while(tsim<=H)
@@ -73,21 +72,25 @@ while(tsim<=H)
             CPR=CPR+cup;
         else
             %仓库满了也是可以生产的，因为机器里还能再存一个
-            %full=1 说明现在机器里还有一个产品
-            %注意这里用了full，因此不再出现status=4的情况，可以确保不出bug
-            full=1;
+            %ns_full=1 说明现在机器里还有一个产品
+            %注意这里用了ns_full，因此不再出现status=4的情况，可以确保不出bug
+            ns_full=1;
         end
     elseif (cur_event==6)%交货
         next_events(6)=f;%下次交货时间
+        if(ns_full==1)
+            %重置下次生产时间
+            next_events(5)=Umax;
+        end
         %交货，不够有惩罚
-        if (ns+full>=q)
-            ns=(ns+full)-q;
+        if (ns+ns_full>=q)
+            ns=(ns+ns_full)-q;
         else
-            CPE=CPE+(q-(ns+full))*cupe;%交罚金
+            CPE=CPE+(q-(ns+ns_full))*cupe;%交罚金
             ns=0;
         end
         %因为每次至少交一个货，所以默认一定会把机器里的货交出去
-        full=0;
+        ns_full=0;
     else
         disp("error")
         break
@@ -95,4 +98,4 @@ while(tsim<=H)
     tsim=tsim+pe;
 end
 CT=CMC+CMP+CPR+CS+CPE;
-CM=CT/tsim
+CM=CT/tsim;

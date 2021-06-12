@@ -21,40 +21,40 @@ pe=0;
 
 while(tsim<=H)
     if (status==1)
-       pe=min([e1,e3]);
-       e1=e1-pe;
-       e3=e3-pe;
-       if(e1==0)
-           status=2;
-           CMC=CMC+cmc;
-           e2=Uc;
-       else
-           if(e3==0)
-               status=3;
-               CMP=CMP+cmp;
-               e4=Up;
-           else
-               disp("erreur no1")
-           end
-       end
+        pe=min([e1,e3]);
+        e1=e1-pe;
+        e3=e3-pe;
+        if(e1==0)
+            status=2;
+            CMC=CMC+cmc;
+            e2=Uc;
+        else
+            if(e3==0)
+                status=3;
+                CMP=CMP+cmp;
+                e4=Up;
+            else
+                disp("erreur no1")
+            end
+        end
     else
-         if(status==2)
-             pe=e2;
-             e2=0;
-             status=1;
-             e1=tbf;
-             e3=T;
-         else
-             if(status==3)
-                 pe=e4;
-                 e4=0;
-                 status=1;
-                 e1=tbf;
-                 e3=T;
-             else
-                 disp("errur no2\n")
-             end
-         end
+        if(status==2)
+            pe=e2;
+            e2=0;
+            status=1;
+            e1=tbf;
+            e3=T;
+        else
+            if(status==3)
+                pe=e4;
+                e4=0;
+                status=1;
+                e1=tbf;
+                e3=T;
+            else
+                disp("errur no2\n")
+            end
+        end
     end
     tsim=tsim+pe;
 end
