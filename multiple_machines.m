@@ -49,50 +49,44 @@ while(tsim<=H)
     %====结算本轮仓储费====
     CS=CS+ns*pe*cus;
     if(cur_machine~=mcc+1)
-        for machine=1:1:mcc
-            %====结算事件更新状态====
-            if(machine~=cur_machine)
-                %不是本机器的事件
-                continue
-            elseif(status(machine)==1 && cur_event==1) %运行中发生故障
-                next_events(machine,1)=Uc+next_fail();%生成下一次的故障时间
-                status(machine)=2;%切换至维修中状态
-                next_events(machine,5)=Uc+next_events(5);%生产延后
-                %故障会重置下次维护时间
-                %故障和维护必须能够刷新对方，不一定要求刷新自己，整个系统才能没有bug
-                next_events(machine,3)=T+Uc;
-                next_events(machine,4)=next_events(machine,3)+Up;
-                %认为维修开始就花钱
-                CMC=CMC+cmc;
-            elseif (status(machine)==2 && cur_event==2)%故障中修好了
-                next_events(machine,2)=next_events(machine,1)+Uc;%下一次维修完成时间
-                status(machine)=1;%切换至生产中状态
-            elseif (status(machine)==1  && cur_event==3)%运行中开始维护
-                next_events(machine,3)=T;%假设机器在下次维护之前都不故障
-                status(machine)=3;%切换至维护中状态
-                next_events(machine,5)=Up+next_events(5);%生产延后
-                %维护后生成下次故障时间
-                next_events(machine,1)=Uc+next_fail();
-                next_events(machine,2)=next_events(machine,1)+Uc;
-                %认为维护开始就花钱
-                CMP=CMP+cmp;
-            elseif (status(machine)==3 && cur_event==4)%维护完成
-                next_events(machine,4)=next_events(machine,3)+Up;%生成下一次维护完成时间
-                status(machine)=1;%切换至生产中状态
-            elseif (status(machine)==1 && cur_event==5)%生产出一个产品
-                next_events(machine,5)=Umax;%下次生产出产品的时间
-                if (ns<nsmax)
-                    ns=ns+1;%仓库存放一个产品
-                    %认为开始生产就计算成本
-                    CPR=CPR+cup;
-                else
-                    %仓库满了也是可以生产的，因为机器里还能再存一个
-                    ns_full(machine)=1;
-                end
+        if(status(cur_machine)==1 && cur_event==1) %运行中发生故障
+            next_events(cur_machine,1)=Uc+next_fail();%生成下一次的故障时间
+            status(cur_machine)=2;%切换至维修中状态
+            next_events(cur_machine,5)=Uc+next_events(5);%生产延后
+            %故障会重置下次维护时间
+            %故障和维护必须能够刷新对方，不一定要求刷新自己，整个系统才能没有bug
+            next_events(cur_machine,3)=T+Uc;
+            next_events(cur_machine,4)=next_events(cur_machine,3)+Up;
+            %认为维修开始就花钱
+            CMC=CMC+cmc;
+        elseif (status(cur_machine)==2 && cur_event==2)%故障中修好了
+            next_events(cur_machine,2)=next_events(cur_machine,1)+Uc;%下一次维修完成时间
+            status(cur_machine)=1;%切换至生产中状态
+        elseif (status(cur_machine)==1  && cur_event==3)%运行中开始维护
+            next_events(cur_machine,3)=T;%假设机器在下次维护之前都不故障
+            status(cur_machine)=3;%切换至维护中状态
+            next_events(cur_machine,5)=Up+next_events(5);%生产延后
+            %维护后生成下次故障时间
+            next_events(cur_machine,1)=Uc+next_fail();
+            next_events(cur_machine,2)=next_events(cur_machine,1)+Uc;
+            %认为维护开始就花钱
+            CMP=CMP+cmp;
+        elseif (status(cur_machine)==3 && cur_event==4)%维护完成
+            next_events(cur_machine,4)=next_events(cur_machine,3)+Up;%生成下一次维护完成时间
+            status(cur_machine)=1;%切换至生产中状态
+        elseif (status(cur_machine)==1 && cur_event==5)%生产出一个产品
+            next_events(cur_machine,5)=Umax;%下次生产出产品的时间
+            if (ns<nsmax)
+                ns=ns+1;%仓库存放一个产品
+                %认为开始生产就计算成本
+                CPR=CPR+cup;
             else
-                disp("error")
-                break
+                %仓库满了也是可以生产的，因为机器里还能再存一个
+                ns_full(cur_machine)=1;
             end
+        else
+            disp("error")
+            break
         end
     %通用事件
     elseif (cur_event==6)%交货
