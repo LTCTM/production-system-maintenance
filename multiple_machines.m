@@ -40,7 +40,7 @@ ns=0;%仓库储量
 
 while(tsim<=H)
     %========获取最新事件========
-    pe=min(next_events,[],'all');
+    pe=min(min(next_events));
     next_events=next_events-pe;
     [cur_machines,cur_events]=find(next_events==0);
     cur_event=cur_events(1);
@@ -78,7 +78,7 @@ while(tsim<=H)
             next_events(cur_machine,5)=Umax;%下次生产出产品的时间
             if (ns<nsmax)
                 ns=ns+1;%仓库存放一个产品
-                %认为开始生产就计算成本
+                %认为生产完成才计算成本
                 CPR=CPR+cup;
             else
                 %仓库满了也是可以生产的，因为机器里还能再存一个

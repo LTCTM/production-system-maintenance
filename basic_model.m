@@ -68,7 +68,7 @@ while(tsim<=H)
         next_events(5)=Umax;%下次生产出产品的时间
         if (ns<nsmax)
             ns=ns+1;%仓库存放一个产品
-            %认为开始生产就计算成本
+            %认为生产完成才计算成本
             CPR=CPR+cup;
         else
             %仓库满了也是可以生产的，因为机器里还能再存一个

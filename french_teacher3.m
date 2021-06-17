@@ -7,84 +7,107 @@ H=1000000;
 Uc=10;
 Up=5;
 Umax=2;
-f=20;
+f=2000;
 q=20;
 nsmax=25;
 cupe=0.1;
 
 arr_result=zeros(20,2);
 %要用for循环走T，找到最佳T，使花费最小
-for T=5:5:100
-    %变量
-    status=1;
-    e1=next_fail();
-    e3=T;
-    e2=0;
-    e4=0;
-    e5=Umax;
-    e6=f;
-    idc=0;
-    %结果变量
-    CMP=0;
-    CMC=0;
-    CS=0;
-    CPR=0;
-    CPE=0;
-    tsim=0;
-    ns=0;
-    %
-    pe=0;
-    
-    while(tsim<=H)
-        if (status==1)
-            pe=min([e1,e3,e5,e6]);
-            e1=e1-pe;
-            e3=e3-pe;
-            e5=e5-pe;
-            e6=e6-pe;
-            if(e1==0)
-                status=2;
-                CMC=CMC+cmc;
-                e2=Uc;
+T=30;
+%变量
+status=1;
+e1=next_fail();
+e3=T;
+e2=0;
+e4=0;
+e5=Umax;
+e6=f;
+idc=0;
+%结果变量
+CMP=0;
+CMC=0;
+CS=0;
+CPR=0;
+CPE=0;
+tsim=0;
+ns=0;
+%
+pe=0;
+
+while(tsim<=H)
+    if (status==1)
+        pe=min([e1,e3,e5,e6]);
+        e1=e1-pe;
+        e3=e3-pe;
+        e5=e5-pe;
+        e6=e6-pe;
+        if(e1==0)
+            status=2;
+            CMC=CMC+cmc;
+            e2=Uc;
+        else
+            if(e3==0)
+                status=3;
+                CMP=CMP+cmp;
+                e4=Up;
             else
-                if(e3==0)
-                    status=3;
-                    CMP=CMP+cmp;
-                    e4=Up;
+                if(e5==0)
+                    CS=CS+((tsim+pe-idc)*ns)*cus;
+                    idc=tsim+pe;
+                    CPR=CPR+cup;
+                    if(ns<nsmax)
+                        ns=ns+1;
+                        e5=Umax;
+                    else
+                        status=4;
+                    end
                 else
-                    if(e5==0)
+                    if(e6==0)
                         CS=CS+((tsim+pe-idc)*ns)*cus;
                         idc=tsim+pe;
-                        CPR=CPR+cup;
-                        if(ns<nsmax)
-                            ns=ns+1;
-                            e5=Umax;
+                        if(ns>=q)
+                            ns=ns-q;
                         else
-                            status=4;
+                            ns=0;
+                            CPE=CPE+(q-ns)*cupe;
                         end
+                        e6=f;
                     else
-                        if(e6==0)
-                            CS=CS+((tsim+pe-idc)*ns)*cus;
-                            idc=tsim+pe;
-                            if(ns>=q)
-                                ns=ns-q;
-                            else
-                                ns=0;
-                                CPE=CPE+(q-ns)*cupe;
-                            end
-                            e6=f;
-                        else
-                            disp("erreur no1");
-                        end
+                        disp("erreur no1");
                     end
                 end
             end
+        end
+    else
+        if(status==2)
+            pe=min([e2,e6]);
+            e2=e2-pe;
+            e6=e6-pe;
+            if(e2==0)
+                status=1;
+                e1=next_fail();
+                e3=T;
+            else
+                if(e6==0)
+                    CS=CS+((tsim+pe-idc)*ns)*cus;
+                    idc=tsim+pe;
+                    if(ns>=q)
+                        ns=ns-q;
+                    else
+                        ns=0;
+                    end
+                    e6=f;
+                else
+                    disp("erreur no2")
+                end
+            end
         else
-            if(status==2)
-                pe=min([e2,e6]);
-                e2=e2-pe;
+            if(status==3)
+                pe=min([e4,e6]);
+                e4=e4-pe;
                 e6=e6-pe;
-                if(e2==0)
+                if(e4==0)
                     status=1;
                     e1=next_fail();
                     e3=T;
@@ -99,57 +122,31 @@ for T=5:5:100
                         end
                         e6=f;
                     else
-                        disp("erreur no2")
+                        disp("erreur no3")
                     end
                 end
             else
-                if(status==3)
-                    pe=min([e4,e6]);
-                    e4=e4-pe;
-                    e6=e6-pe;
-                    if(e4==0)
-                        status=1;
-                        e1=next_fail();
-                        e3=T;
+                if(status==4)
+                    CS=CS+((tsim+pe-idc)*ns)*cus;
+                    idc=tsim+pe;
+                    if(ns+1>=q)
+                        ns=ns+1-q;
                     else
-                        if(e6==0)
-                            CS=CS+((tsim+pe-idc)*ns)*cus;
-                            idc=tsim+pe;
-                            if(ns>=q)
-                                ns=ns-q;
-                            else
-                                ns=0;
-                            end
-                            e6=f;
-                        else
-                            disp("erreur no3")
-                        end
+                        ns=0;
+                        CPE=CPE+(q-(ns+1))*cupe;
                     end
+                    e6=f;
+                    status=1;
+                    e5=Umax;
                 else
-                    if(status==4)
-                        CS=CS+((tsim+pe-idc)*ns)*cus;
-                        idc=tsim+pe;
-                        if(ns+1>=q)
-                            ns=ns+1-q;
-                        else
-                            ns=0;
-                            CPE=CPE+(q-(ns+1))*cupe;
-                        end
-                        e6=f;
-                        status=1;
-                        e5=Umax;
-                    else
-                        disp("errur no4\n")
-                    end
+                    disp("errur no4\n")
                 end
             end
         end
-        tsim=tsim+pe;
     end
-    CT=CMC+CMP+CS+CPR+CPE;
-    CM=CT/tsim;
-    arr_result(T/5,1)=T;
-    arr_result(T/5,2)=CM;
+    tsim=tsim+pe;
 end
-disp(arr_result(arr_result(:,2)==min(arr_result(:,2)),1))
-plot(arr_result(:,1),arr_result(:,2))
+CT=CMC+CMP+CS+CPR+CPE;
+CM=CT/tsim;
+arr_result(T/5,1)=T;
+arr_result(T/5,2)=CM;
