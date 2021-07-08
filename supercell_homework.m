@@ -1,20 +1,20 @@
-function CM=supercell_homework(m,U)
-    H=1000;%设计运行时长
+function CM=supercell_homework(m,U)    
+    H=30000;%设计运行时长
+    exp_func=@(L)(-log(rand())/L);
+    weibull=@(a,b)(b*(-log(rand())).^(1/a));
+    gc=[4,6];%维修时间，等价于[gc(t),gcs(t)]
+    gp=[2,4];%维护时间，等价于[gp(t),gps(t)]
+    
     cmc=[50,60];%单次维修费，等价于[cmc,cmcs]
     cmp=[5,10];%单次维护费，等价于[cmp,cmps]
     cs=0.5;%单位时间单位产品仓储费
     cprod=[0.7,0.9];%生产一个产品的成本，等价于[cprod,cprods]
     cp=4;%每件交付失败罚金
 
-    %mathematica计算出随机函数的期望值，这样可以减少循环次数
-    f=[50*sqrt(pi),50*sqrt(pi)];%下次故障时间，等价于[f(t),fs(t)]
-    gc=[1/4,1/6];%维修时间，等价于[gc(t),gcs(t)]
-    gp=[1/2,1/4];%维护时间，等价于[gp(t),gps(t)]
     Umax=[0.3,0.4];%生产一个产品所需时间，等价于[Umax,Usmax]
-
     Q=20;%交货量
     Freq=10;%交货频率
-    NSmax=25;%满容
+    NSmax=50;%满容
     Ts=40;%维护频率
 
     %====启动====
@@ -22,11 +22,11 @@ function CM=supercell_homework(m,U)
     %第2行是备用机器事件
     %第3行是通用事件，只有交货
     next_events=[
-    f(1),NaN,m,m+gp(1),U,NaN;
+    weibull(2,100),NaN,m,m+exp_func(gp(1)),U,NaN;
     NaN,NaN,NaN,NaN,NaN,NaN;
     NaN,NaN,NaN,NaN,NaN,Freq];
     %首次维修完成时间
-    next_events(1,2)=next_events(1,1)+gc(1);
+    next_events(1,2)=next_events(1,1)+exp_func(gc(1));
     tsim=0;%累计运行时长
     status=[1,4];%启动模拟时主要机器处于“生产中”状态，备用机器处于“休眠中”状态
     ns_full=[0,0];%是否满容，和status类似
@@ -55,30 +55,34 @@ function CM=supercell_homework(m,U)
         if(cur_machine~=3)
             %========每个机器分别结算自己的事件========
             if(status(cur_machine)==1 && cur_event==1) %运行中发生故障
-                next_events(cur_machine,1)=gc(cur_machine)+f(cur_machine);%生成下一次的故障时间
                 status(cur_machine)=2;%切换至维修中状态
-                next_events(cur_machine,5)=gc(cur_machine)+next_events(5);%生产延后
+                c_time=weibull(2,100);%维修所需时间
+                next_events(cur_machine,2)=next_events(cur_machine,1)+c_time;%本次维修完成时间
+                next_events(cur_machine,1)=c_time+weibull(2,100);%生成下一次的故障时间
+                next_events(cur_machine,5)=c_time+next_events(5);%生产延后
                 %故障会重置下次维护时间
-                %故障和维护必须能够刷新对方，不一定要求刷新自己
-                next_events(cur_machine,3)=m+gc(cur_machine);
-                next_events(cur_machine,4)=next_events(cur_machine,3)+gp(cur_machine);
+                %故障和维护必须能够刷新对方
+                next_events(cur_machine,3)=m+c_time;
+                next_events(cur_machine,4)=next_events(cur_machine,3)+exp_func(gp(cur_machine));
                 %维修开始时花钱
                 CMC=CMC+cmc(cur_machine);
             elseif (status(cur_machine)==2 && cur_event==2)%故障中修好了
-                next_events(cur_machine,2)=next_events(cur_machine,1)+gc(cur_machine);%下一次维修完成时间
                 status(cur_machine)=1;%切换至生产中状态
+                next_events(cur_machine,2)=NaN;
             elseif (status(cur_machine)==1 && cur_event==3)%运行中开始维护
-                next_events(cur_machine,3)=m;%假设机器在下次维护之前都不故障
                 status(cur_machine)=3;%切换至维护中状态
-                next_events(cur_machine,5)=gp(cur_machine)+next_events(5);%生产延后
+                p_time=exp_func(gp(cur_machine));%本次维护时间
+                next_events(cur_machine,4)=next_events(cur_machine,3)+p_time;%本次维护完成时间
+                next_events(cur_machine,3)=m;%生成下次维护时间
+                next_events(cur_machine,5)=p_time+next_events(5);%生产延后
                 %维护后生成下次故障时间
-                next_events(cur_machine,1)=gc(cur_machine)+f(cur_machine);
-                next_events(cur_machine,2)=next_events(cur_machine,1)+gc(cur_machine);
+                next_events(cur_machine,1)=p_time+weibull(2,100);
+                next_events(cur_machine,2)=next_events(cur_machine,1)+exp_func(gc(cur_machine));
                 %认为维护开始就花钱
                 CMP=CMP+cmp(cur_machine);
             elseif (status(cur_machine)==3 && cur_event==4)%维护完成
-                next_events(cur_machine,4)=next_events(cur_machine,3)+gp(cur_machine);%生成下一次维护完成时间
                 status(cur_machine)=1;%切换至生产中状态
+                next_events(cur_machine,4)=NaN;
             elseif (status(cur_machine)==1 && cur_event==5)%生产出一个产品
                 next_events(cur_machine,5)=U;%下次生产出产品的时间
                 if (ns<NSmax)
@@ -92,14 +96,14 @@ function CM=supercell_homework(m,U)
                     ns_full(cur_machine)=1;
                 end
             else
-                disp("error")
+                disp("error1")
                 break
             end
             %如果主要机器坏了或开始维护，备用机器正在休眠，那么备用机器开始工作
             if(cur_machine==1 && status(1)~=1 && status(2)==4)
-                next_events(2,:)=[f(2),NaN,m,m+gp(1),Umax(2),NaN];
+                next_events(2,:)=[weibull(2,100),NaN,m,m+exp_func(gp(1)),Umax(2),NaN];
                 %首次维修完成时间
-                next_events(2,2)=next_events(2,1)+gc(2);
+                next_events(2,2)=next_events(2,1)+exp_func(gc(2));
                 %备用机器状态切换为“工作中”
                 status(2)=1;
             %如果备用机器正在工作，发现主要机器已经在工作了，那么备用机器休眠
@@ -121,7 +125,7 @@ function CM=supercell_homework(m,U)
             %因为每次至少交2个货，所以默认一定会把机器里的货交出去
             ns_full(:)=0;
         else
-            disp("error")
+            disp("error2")
             break
         end
         tsim=tsim+pe;
