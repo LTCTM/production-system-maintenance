@@ -13,7 +13,7 @@ for U = start_U:step_U:end_U
     x=round((U-start_U)/step_U)+1;
     for m = start_m:step_m:end_m
         y=round((m-start_m)/step_m)+1;
-        results(x,y)=supercell_homework(m,U);
+        results(x,y)=supercell_homework(m,U,30000);
     end
 end
 %找到花费最小的情况
