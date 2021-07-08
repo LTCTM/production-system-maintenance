@@ -1,5 +1,4 @@
-function CM=supercell_homework(m,U)    
-    H=30000;%设计运行时长
+function CM=supercell_homework(m,U,H)
     exp_func=@(L)(-log(rand())/L);
     weibull=@(a,b)(b*(-log(rand())).^(1/a));
     gc=[4,6];%维修时间，等价于[gc(t),gcs(t)]
