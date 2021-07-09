@@ -36,12 +36,9 @@ function CM=supercell_homework(m,U,H)
     %第3行是通用事件，只有交货
     %La ligne 3 est l'événement de demande
     next_events=[
-    weibull(2,100),NaN,m,m+exp_func(gp(1)),U,NaN;
+    weibull(2,100),NaN,m,NaN,U,NaN;
     NaN,NaN,NaN,NaN,NaN,NaN;
     NaN,NaN,NaN,NaN,NaN,Freq];
-    %首次维修完成时间
-    %générer la permière gc
-    next_events(1,2)=next_events(1,1)+exp_func(gc(1));
     tsim=0;%累计运行时长
     status=[1,4];
     %是否满容
@@ -80,13 +77,12 @@ function CM=supercell_homework(m,U,H)
                 %运行中发生故障
                 %Défaillance pendant le fonctionnement
                 status(cur_machine)=2;%切换至维修中状态
-                c_time=weibull(2,100);%维修所需时间
-                next_events(cur_machine,2)=next_events(cur_machine,1)+c_time;%本次维修完成时间
+                c_time=exp_func(gc(cur_machine));%维修所需时间
+                next_events(cur_machine,2)=c_time;%本次维修完成时间
                 next_events(cur_machine,1)=c_time+weibull(2,100);%生成下一次的故障时间
                 next_events(cur_machine,5)=c_time+next_events(5);%生产延后
                 %故障会重置下次维护时间
                 next_events(cur_machine,3)=m+c_time;
-                next_events(cur_machine,4)=next_events(cur_machine,3)+exp_func(gp(cur_machine));
                 %维修开始时花钱
                 CMC=CMC+cmc(cur_machine);
             elseif (status(cur_machine)==2 && cur_event==2)
@@ -99,12 +95,11 @@ function CM=supercell_homework(m,U,H)
                 %Maintenance préventive commencée pendant le fonctionnement
                 status(cur_machine)=3;%切换至维护中状态
                 p_time=exp_func(gp(cur_machine));%本次维护时间
-                next_events(cur_machine,4)=next_events(cur_machine,3)+p_time;%本次维护完成时间
+                next_events(cur_machine,4)=p_time;%本次维护完成时间
                 next_events(cur_machine,3)=m;%生成下次维护时间
                 next_events(cur_machine,5)=p_time+next_events(5);%生产延后
                 %维护后生成下次故障时间
                 next_events(cur_machine,1)=p_time+weibull(2,100);
-                next_events(cur_machine,2)=next_events(cur_machine,1)+exp_func(gc(cur_machine));
                 %认为维护开始就花钱
                 CMP=CMP+cmp(cur_machine);
             elseif (status(cur_machine)==3 && cur_event==4)
@@ -133,10 +128,7 @@ function CM=supercell_homework(m,U,H)
             %如果主要机器坏了或开始维护，备用机器正在休眠，那么备用机器开始工作
             %si M est en maintenance, et Ms est en endormir: Ms à fonctionnement
             if(cur_machine==1 && status(1)~=1 && status(2)==4)
-                next_events(2,:)=[weibull(2,100),NaN,m,m+exp_func(gp(1)),Umax(2),NaN];
-                %首次维修完成时间
-                %générer la permière gc
-                next_events(2,2)=next_events(2,1)+exp_func(gc(2));
+                next_events(2,:)=[weibull(2,100),NaN,m,NaN,Umax(2),NaN];
                 status(2)=1;
             %如果备用机器正在工作，发现主要机器已经在工作了，那么备用机器休眠
             %si Ms est en fonctionnement, et M est en fonctionnement: Ms à endormir

@@ -1,10 +1,19 @@
 %高维
+<<<<<<< HEAD
 start_U=0.49;
 end_U=0.53;
 step_U=0.005;
 %低维
 start_m=100;
 end_m=130;
+=======
+start_U=0.46;
+end_U=0.54;
+step_U=0.01;
+%低维
+start_m=90;
+end_m=170;
+>>>>>>> dc4afbab1d1db88603cb213577b66973a47bee41
 step_m=5;
 %结论:U=0.512-0.519,m=110-155
 
@@ -15,7 +24,11 @@ for U = start_U:step_U:end_U
     for m = start_m:step_m:end_m
         %Indice de tableau au paramètre réel
         y=round((m-start_m)/step_m)+1;
+<<<<<<< HEAD
         results(x,y)=supercell_homework(m,U,10000);
+=======
+        results(x,y)=supercell_homework(m,U,3000);
+>>>>>>> dc4afbab1d1db88603cb213577b66973a47bee41
     end
 end
 %找到花费最小的选择
