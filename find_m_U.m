@@ -1,8 +1,7 @@
-%高维
 start_U=0.49;
 end_U=0.53;
 step_U=0.005;
-%低维
+
 start_m=100;
 end_m=130;
 step_m=5;

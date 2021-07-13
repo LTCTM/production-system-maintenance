@@ -59,7 +59,7 @@ function CM=supercell_homework(m,U,H)
         pe=min(min(next_events));
         next_events=next_events-pe;
         %找到发生下一个事件的机器和内容
-        %Trouvez la machine et le contenu où se produit le prochain événement
+        %Trouvez la machine et le numéro où se produit le prochain événement
         [cur_machines,cur_events]=find(next_events==0);
         cur_event=cur_events(1);
         cur_machine=cur_machines(1);
@@ -76,48 +76,63 @@ function CM=supercell_homework(m,U,H)
             if(status(cur_machine)==1 && cur_event==1)
                 %运行中发生故障
                 %Défaillance pendant le fonctionnement
-                status(cur_machine)=2;%切换至维修中状态
-                c_time=exp_func(gc(cur_machine));%维修所需时间
-                next_events(cur_machine,2)=c_time;%本次维修完成时间
-                next_events(cur_machine,1)=c_time+weibull(2,100);%生成下一次的故障时间
-                next_events(cur_machine,5)=c_time+next_events(5);%生产延后
+                status(cur_machine)=2;
+                %维修所需时间
+                %temps de la MC
+                c_time=exp_func(gc(cur_machine));
+                %本次维修完成时间
+                %la fin de la MC
+                next_events(cur_machine,2)=c_time;
+                %生成下一次的故障时间
+                %la MC prochaine
+                next_events(cur_machine,1)=c_time+weibull(2,100);
+                %生产延后
+                %retarde de la production
+                next_events(cur_machine,5)=c_time+next_events(5);
                 %故障会重置下次维护时间
+                %la MP prochaine avec un retard du temps de MC
                 next_events(cur_machine,3)=m+c_time;
-                %维修开始时花钱
                 CMC=CMC+cmc(cur_machine);
             elseif (status(cur_machine)==2 && cur_event==2)
                 %故障中修好了
                 %réparé en plein milieu d'une panne
-                status(cur_machine)=1;%切换至生产中状态
+                status(cur_machine)=1;
                 next_events(cur_machine,2)=NaN;
             elseif (status(cur_machine)==1 && cur_event==3)
                 %运行中开始维护
                 %Maintenance préventive commencée pendant le fonctionnement
-                status(cur_machine)=3;%切换至维护中状态
-                p_time=exp_func(gp(cur_machine));%本次维护时间
-                next_events(cur_machine,4)=p_time;%本次维护完成时间
-                next_events(cur_machine,3)=m;%生成下次维护时间
-                next_events(cur_machine,5)=p_time+next_events(5);%生产延后
+                status(cur_machine)=3;
+                %本次维护时间
+                %temps de la MP
+                p_time=exp_func(gp(cur_machine));
+                %本次维护完成时间
+                %la fin de la MP
+                next_events(cur_machine,4)=p_time;
+                %生成下一次的维护时间
+                %la MP prochaine
+                next_events(cur_machine,3)=m;
+                %生产延后
+                %retarde de la production
+                next_events(cur_machine,5)=p_time+next_events(5);
                 %维护后生成下次故障时间
+                %la MC prochaine avec un retard du temps de MP
                 next_events(cur_machine,1)=p_time+weibull(2,100);
-                %认为维护开始就花钱
                 CMP=CMP+cmp(cur_machine);
             elseif (status(cur_machine)==3 && cur_event==4)
                 %维护完成
                 %maintenance préventive fini
-                status(cur_machine)=1;%切换至生产中状态
+                status(cur_machine)=1;
                 next_events(cur_machine,4)=NaN;
             elseif (status(cur_machine)==1 && cur_event==5)
                 %生产出一个产品
                 %Produire un produit
-                next_events(cur_machine,5)=U;%下次生产出产品的时间
+                next_events(cur_machine,5)=U;
                 if (ns<NSmax)
-                    ns=ns+1;%仓库存放一个产品
-                    CPROD=CPROD+cprod(cur_machine);%生产完成才计算成本
+                    ns=ns+1;
+                    CPROD=CPROD+cprod(cur_machine);
                 else
-                    %仓库满了也是可以生产的，因为机器里还能再存一个
                     if(ns_full(cur_machine)==0)
-                        CPROD=CPROD+cprod(cur_machine);%生产完成才计算成本
+                        CPROD=CPROD+cprod(cur_machine);
                     end
                     ns_full(cur_machine)=1;
                 end
